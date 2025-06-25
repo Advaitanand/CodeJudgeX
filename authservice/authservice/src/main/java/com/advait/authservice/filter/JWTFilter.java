@@ -1,7 +1,6 @@
 package com.advait.authservice.filter;
 
 import java.io.IOException;
-import java.security.PublicKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,12 +11,10 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.advait.authservice.service.AuthJWTService;
 import com.advait.authservice.service.AuthUserDetailsService;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,10 +27,10 @@ public class JWTFilter extends OncePerRequestFilter{
 	private final String BEARER_PREFIX = "Bearer ";
 	
 	@Autowired
-	private PublicKey publicKey;
+	private AuthUserDetailsService userDetailsService;
 	
 	@Autowired
-	private AuthUserDetailsService userDetailsService;
+	private AuthJWTService authJwtService;
 	
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -49,22 +46,21 @@ public class JWTFilter extends OncePerRequestFilter{
 		String token = authHeader.substring(BEARER_PREFIX.length());
 		
 		try {
-			Jws<Claims> jws = Jwts.parser() 
-				    .verifyWith(publicKey)       
-				    .build()                     
-				    .parseSignedClaims(token);
 			
-			String username = jws.getPayload().getSubject();
-			if (username == null || username.isBlank()) {
-			    throw new JwtException("Missing subject claim");
-			}
-			
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+			String username = authJwtService.getUsernameFromJwtToken(token);
 			
 			if(username == null || SecurityContextHolder.getContext().getAuthentication()==null) {
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-			    SecurityContextHolder.getContext().setAuthentication(authentication);
+				
+				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+				
+				if(authJwtService.validateToken(token,userDetails)) {
+					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+				    SecurityContextHolder.getContext().setAuthentication(authentication);
+				}
+				
+			}else {
+				throw new JwtException("Missing subject claim");
 			}
 		} catch (UsernameNotFoundException ex) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

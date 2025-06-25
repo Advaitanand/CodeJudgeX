@@ -3,6 +3,7 @@ package com.advait.authservice.exception;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,11 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MalformedJwtException.class)
 	public ResponseEntity<String> malformedJWT(MalformedJwtException ex){
 		return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("User not authenticated");
+	}
+	
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<String> redundantData(DataIntegrityViolationException ex){
+		return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("Email already in use");
 	}
 	
 }
