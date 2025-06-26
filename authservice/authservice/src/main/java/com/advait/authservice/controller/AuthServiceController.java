@@ -1,6 +1,7 @@
 package com.advait.authservice.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,9 +9,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.advait.authservice.dto.LoginRequestDto;
-import com.advait.authservice.dto.RegisterRequestDto;
+import com.advait.authservice.dto.LoginRequest;
+import com.advait.authservice.dto.LoginResponse;
+import com.advait.authservice.dto.LogoutRequest;
+import com.advait.authservice.dto.RefreshTokenRequest;
+import com.advait.authservice.dto.RefreshTokenResponse;
+import com.advait.authservice.dto.RegisterRequest;
+import com.advait.authservice.exception.InvalidRefreshTokenException;
 import com.advait.authservice.exception.RedundantUsernameException;
+import com.advait.authservice.exception.RefreshTokenExpiredException;
 import com.advait.authservice.model.UserPrincipal;
 import com.advait.authservice.model.Users;
 import com.advait.authservice.service.AuthService;
@@ -35,7 +42,7 @@ public class AuthServiceController {
 	}
 	
 	@PostMapping("/register")
-	public String register(@Valid @RequestBody RegisterRequestDto registerRequest) throws RedundantUsernameException {
+	public String register(@Valid @RequestBody RegisterRequest registerRequest) throws RedundantUsernameException {
 		Users user = new Users();
 		user.setEmail(registerRequest.getEmail());
 		user.setUsername(registerRequest.getUsername());
@@ -44,7 +51,7 @@ public class AuthServiceController {
 	}
 	
 	@PostMapping("/login")
-	public String login(@Valid @RequestBody LoginRequestDto loginRequest) {
+	public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
 		Users user = new Users();
 		user.setUsername(loginRequest.getUsername());
 		user.setPassword(loginRequest.getPassword());
@@ -54,5 +61,16 @@ public class AuthServiceController {
 	@GetMapping("/public-key")
 	public String getPublicKey() {
 		return service.getPublicKey();
+	}
+	
+	@GetMapping("/refresh")
+	public RefreshTokenResponse refresh(@Valid @RequestBody RefreshTokenRequest request) throws RefreshTokenExpiredException, InvalidRefreshTokenException {
+		return service.refresh(request);
+	}
+	
+	@PostMapping("/logout")
+	public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest request) {
+		service.logout(request);
+		return ResponseEntity.ok("Logged out successfully");
 	}
 }

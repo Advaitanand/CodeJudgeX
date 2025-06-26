@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class RegisterRequestDto {
+public class RegisterRequest {
 	@Pattern(regexp = "^[a-zA-Z0-9_]{3,30}$", message = "Username can only contain letters, numbers and underscores")
 	@NotBlank(message = "Username cannot be empty")
 	private String username;

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -33,17 +32,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body("Unexpected or unknown fields in request.");
     }
 	
-	
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<String> handleGenericException(Exception ex) {
-
-		ex.printStackTrace();
-
-	    // Return a safe generic error to the client
-	    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	            .body("Something went wrong");
-	}
-	
 	@ExceptionHandler(RedundantUsernameException.class)
 	public ResponseEntity<String> redundantUsername(RedundantUsernameException ex){
 		return ResponseEntity.badRequest().body(ex.getMessage());
@@ -62,6 +50,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<String> redundantData(DataIntegrityViolationException ex){
 		return ResponseEntity.status(HttpStatusCode.valueOf(403)).body("Email already in use");
+	}
+	
+	@ExceptionHandler(RefreshTokenExpiredException.class)
+	public ResponseEntity<String> refreshTokenExpired(RefreshTokenExpiredException ex){
+		return ResponseEntity.status(HttpStatusCode.valueOf(401)).body(ex.getMessage());
+	}
+	
+	@ExceptionHandler(InvalidRefreshTokenException.class)
+	public ResponseEntity<String> refreshTokenExpired(InvalidRefreshTokenException ex){
+		return ResponseEntity.status(HttpStatusCode.valueOf(401)).body(ex.getMessage());
 	}
 	
 }

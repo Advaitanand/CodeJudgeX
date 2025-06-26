@@ -56,7 +56,7 @@ public class AuthJWTService {
 		return extractExpirationDate(token).before(new Date());
 	}
 
-	private Date extractExpirationDate(String token) {
+	public Date extractExpirationDate(String token) {
 		return extractClaim(token,Claims::getExpiration);
 	}
 

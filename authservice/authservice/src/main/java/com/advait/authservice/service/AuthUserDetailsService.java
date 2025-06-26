@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 
 import com.advait.authservice.model.UserPrincipal;
 import com.advait.authservice.model.Users;
-import com.advait.authservice.repository.AuthRepository;
+import com.advait.authservice.repository.AuthUserRepository;
 
 @Service
 public class AuthUserDetailsService implements UserDetailsService{
 	
 	@Autowired
-	private AuthRepository repository;
+	private AuthUserRepository repository;
 	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
