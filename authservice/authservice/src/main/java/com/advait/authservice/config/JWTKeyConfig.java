@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
-import com.advait.authservice.utility.RSAKeyUtility;
+import com.advait.authservice.utility.CryptoKeyUtility;
 
 @Configuration
 public class JWTKeyConfig {
@@ -30,7 +30,7 @@ public class JWTKeyConfig {
     public PrivateKey jwtPrivateKey() throws Exception {
         Resource resource = resourceLoader.getResource(privateKeyPath);
         try (InputStream is = resource.getInputStream()) {
-            return RSAKeyUtility.loadPrivateKey(is);
+            return CryptoKeyUtility.loadPrivateKey(is);
         }
     }
 
@@ -38,7 +38,7 @@ public class JWTKeyConfig {
     public PublicKey jwtPublicKey() throws Exception {
         Resource resource = resourceLoader.getResource(publicKeyPath);
         try (InputStream is = resource.getInputStream()) {
-            return RSAKeyUtility.loadPublicKey(is);
+            return CryptoKeyUtility.loadPublicKey(is);
         }
     }
 }

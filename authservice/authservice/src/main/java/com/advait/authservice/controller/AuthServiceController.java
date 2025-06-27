@@ -18,6 +18,7 @@ import com.advait.authservice.dto.RegisterRequest;
 import com.advait.authservice.exception.InvalidRefreshTokenException;
 import com.advait.authservice.exception.RedundantUsernameException;
 import com.advait.authservice.exception.RefreshTokenExpiredException;
+import com.advait.authservice.exception.UnauthorizedAccessException;
 import com.advait.authservice.model.UserPrincipal;
 import com.advait.authservice.model.Users;
 import com.advait.authservice.service.AuthService;
@@ -69,7 +70,7 @@ public class AuthServiceController {
 	}
 	
 	@PostMapping("/logout")
-	public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest request) {
+	public ResponseEntity<String> logout(@Valid @RequestBody LogoutRequest request) throws UnauthorizedAccessException {
 		service.logout(request);
 		return ResponseEntity.ok("Logged out successfully");
 	}

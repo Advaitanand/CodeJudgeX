@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,12 @@ import com.advait.authservice.dto.RefreshTokenResponse;
 import com.advait.authservice.exception.InvalidRefreshTokenException;
 import com.advait.authservice.exception.RedundantUsernameException;
 import com.advait.authservice.exception.RefreshTokenExpiredException;
+import com.advait.authservice.exception.UnauthorizedAccessException;
 import com.advait.authservice.model.RefreshTokens;
 import com.advait.authservice.model.Users;
 import com.advait.authservice.repository.AuthRefreshTokenRepository;
 import com.advait.authservice.repository.AuthUserRepository;
+import com.advait.authservice.utility.RefreshTokenHasher;
 
 @Service
 public class AuthService {
@@ -47,6 +50,9 @@ public class AuthService {
 	
 	@Autowired
 	private PublicKey publicKey;
+	
+	@Autowired
+	private RefreshTokenHasher refreshTokenHasher;
 	
 	public String registerUsers(Users users) throws RedundantUsernameException {
 		
@@ -93,7 +99,7 @@ public class AuthService {
 	public RefreshTokenResponse refresh(RefreshTokenRequest request) throws RefreshTokenExpiredException, InvalidRefreshTokenException {
 		RefreshTokenResponse response = new RefreshTokenResponse();
 		
-		RefreshTokens refreshTokensFromDb = authRefreshTokenRepo.findByToken(request.getRefreshToken());
+		RefreshTokens refreshTokensFromDb = authRefreshTokenRepo.findByToken(refreshTokenHasher.hashRefreshToken(request.getRefreshToken()));
 		if (refreshTokensFromDb == null) {
 		    throw new InvalidRefreshTokenException("Invalid token");
 		}
@@ -116,7 +122,7 @@ public class AuthService {
 		
 		RefreshTokens refreshToken = new RefreshTokens();
 		refreshToken.setGeneratedAt(Instant.now());
-		refreshToken.setToken(token);
+		refreshToken.setToken(refreshTokenHasher.hashRefreshToken(token));
 		refreshToken.setUsername(username);
 		refreshToken.setExpiresAt(Instant.now().plusSeconds(REFRESH_TOKEN_EXPIRY));
 		
@@ -124,10 +130,17 @@ public class AuthService {
 		
 	}
 
-	public void logout(LogoutRequest request) {
-		RefreshTokens token = authRefreshTokenRepo.findByToken(request.getRefreshToken());
-		if(token != null) {
-			authRefreshTokenRepo.delete(token);
+	public void logout(LogoutRequest request) throws UnauthorizedAccessException {
+		RefreshTokens token = authRefreshTokenRepo.findByToken(refreshTokenHasher.hashRefreshToken(request.getRefreshToken()));
+		
+		if(token==null) {
+			return;
 		}
+		
+		if(token.getUsername().equals(SecurityContextHolder.getContext().getAuthentication().getName())) {
+			throw new UnauthorizedAccessException("Refresh Token does no belong to the current user");
+		}
+		
+		authRefreshTokenRepo.delete(token);
 	}
 }
